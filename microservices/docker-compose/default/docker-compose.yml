@@ -1,0 +1,308 @@
+services:
+  userdb:
+    image: mysql
+    container_name: userdb
+    ports:
+      - 3301:3306
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: userdb
+    networks:
+      - kamana04
+
+  bookingdb:
+    image: mysql
+    container_name: bookingdb
+    ports:
+      - 3302:3306
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: bookingdb
+    networks:
+      - kamana04
+
+  categorydb:
+    image: mysql
+    container_name: categorydb
+    ports:
+      - 3303:3306
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: categorydb
+    networks:
+      - kamana04
+
+  paymentdb:
+    image: mysql
+    container_name: paymentdb
+    ports:
+      - 3304:3306
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: paymentdb
+    networks:
+      - kamana04
+
+  salondb:
+    image: mysql
+    container_name: salondb
+    ports:
+      - 3305:3306
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: salondb
+    networks:
+      - kamana04
+
+  servicesdb:
+    image: mysql
+    container_name: servicesdb
+    ports:
+      - 3307:3306
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: servicesdb
+    networks:
+      - kamana04
+
+  eurekaserver:
+    image: "kamana04/salon-eureka-server:v1"
+    ports:
+      - "8070:8070"
+    healthcheck:
+      test: ["CMD", "curl --fail --silent eureka-server:8070/actuator/health/readiness | grep UP }} exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    container_name: eureka-server
+
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+    networks:
+      - kamana04
+
+  user:
+    image: "kamana04/salon-user:v1"
+    ports:
+      - "5001:5001"
+    healthcheck:
+      test: [ "CMD", "curl --fail --silent user:5001/actuator/health/readiness | grep UP }} exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    container_name: user
+    depends_on:
+      userdb:
+        condition: service_healthy
+    environment:
+      SPRING_APPLICATION_NAME: "user-service"
+      SPRING_DATASOURCE_URL: "jdbc:mysql://userdb:3306/userdb"
+      SPRING_DATASOURCE_USERNAME: "root"
+      SPRING_DATASOURCE_PASSWORD: "root"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8070/eureka/
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+    networks:
+      - kamana04
+
+  booking:
+    image: "kamana04/salon-booking:v1"
+    ports:
+      - "5005:5005"
+    healthcheck:
+      test: [ "CMD", "curl --fail --silent booking:5005/actuator/health/readiness | grep UP }} exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    container_name: booking
+    depends_on:
+      bookingdb:
+        condition: service_healthy
+    environment:
+      SPRING_APPLICATION_NAME: "booking-service"
+      SPRING_DATASOURCE_URL: "jdbc:mysql://bookingdb:3306/bookingdb"
+      SPRING_DATASOURCE_USERNAME: "root"
+      SPRING_DATASOURCE_PASSWORD: "root"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8070/eureka/
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+    networks:
+      - kamana04
+
+  category:
+    image: "kamana04/salon-category:v1"
+    ports:
+      - "5003:5003"
+    healthcheck:
+      test: [ "CMD", "curl --fail --silent category:5003/actuator/health/readiness | grep UP }} exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    container_name: category
+    depends_on:
+      categorydb:
+        condition: service_healthy
+    environment:
+      SPRING_APPLICATION_NAME: "category-service"
+      SPRING_DATASOURCE_URL: "jdbc:mysql://categorydb:3306/categorydb"
+      SPRING_DATASOURCE_USERNAME: "root"
+      SPRING_DATASOURCE_PASSWORD: "root"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8070/eureka/
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+    networks:
+      - kamana04
+
+  payment:
+    image: "kamana04/salon-payment:v1"
+    ports:
+      - "5006:5006"
+    healthcheck:
+      test: [ "CMD", "curl --fail --silent payment:5006/actuator/health/readiness | grep UP }} exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    container_name: payment
+    depends_on:
+      paymentdb:
+        condition: service_healthy
+    environment:
+      SPRING_APPLICATION_NAME: "payment-service"
+      SPRING_DATASOURCE_URL: "jdbc:mysql://paymentdb:3306/paymentdb"
+      SPRING_DATASOURCE_USERNAME: "root"
+      SPRING_DATASOURCE_PASSWORD: "root"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8070/eureka/
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+    networks:
+      - kamana04
+
+  salon:
+    image: "kamana04/salon-salonservice:v1"
+    ports:
+      - "5002:5002"
+    healthcheck:
+      test: [ "CMD", "curl --fail --silent salon:5002/actuator/health/readiness | grep UP }} exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    container_name: salon
+    depends_on:
+      salondb:
+        condition: service_healthy
+    environment:
+      SPRING_APPLICATION_NAME: "salon-service"
+      SPRING_DATASOURCE_URL: "jdbc:mysql://salondb:3306/salondb"
+      SPRING_DATASOURCE_USERNAME: "root"
+      SPRING_DATASOURCE_PASSWORD: "root"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8070/eureka/
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+    networks:
+      - kamana04
+
+  service-offering:
+    image: "kamana04/salon-service-offering:v1"
+    ports:
+      - "5004:5004"
+    healthcheck:
+      test: [ "CMD", "curl --fail --silent service-offering:5004/actuator/health/readiness | grep UP }} exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    container_name: service-offering
+    depends_on:
+      servicesdb:
+        condition: service_healthy
+    environment:
+      SPRING_APPLICATION_NAME: "service-offering"
+      SPRING_DATASOURCE_URL: "jdbc:mysql://servicesdb:3306/servicesdb"
+      SPRING_DATASOURCE_USERNAME: "root"
+      SPRING_DATASOURCE_PASSWORD: "root"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8070/eureka/
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+    networks:
+      - kamana04
+
+  gatewayserver:
+    image: "kamana04/salon-gateway-server:v1"
+    ports:
+      - "5000:5000"
+    healthcheck:
+      test: [ "CMD", "curl --fail --silent gatewayserver:5000/actuator/health/readiness | grep UP }} exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    container_name: gatewayserver
+    environment:
+      SPRING_APPLICATION_NAME: "gateway-server"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8070/eureka/
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+    networks:
+      - kamana04
+
+networks:
+  kamana04:
+    driver: "bridge"

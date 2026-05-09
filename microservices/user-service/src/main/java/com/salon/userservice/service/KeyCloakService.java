@@ -1,5 +1,6 @@
 package com.salon.userservice.service;
 
+import com.salon.userservice.payload.dto.KeycloakUserinfo;
 import com.salon.userservice.payload.dto.*;
 import com.salon.userservice.payload.response.TokenResponse;
 import lombok.RequiredArgsConstructor;
@@ -24,15 +25,16 @@ public class KeyCloakService {
     private static final String CLIENT_ID = "salon-booking-client";
     private static final String CLIENT_SECRET = "VmxmbChHuWxco6I2CFBpV71gOFfluRzH";
     private static final String GRANT_TYPE = "password";
-    private static final String SCOPE = "openid profile email";
-    private static final String USERNAME = "zosh";
-    private static final String PASSWORD = "admin";
+    private static final String scope = "openid email profile"; // Adjust grant type if necessary
+    private static final String username = "zosh";
+    private static final String password = "admin";
     private static final String clientId = "12311fde-4ce4-4e18-af3e-6474b4235178";
 
     private final RestTemplate restTemplate; // to fetch data from api
 
     public void createUser(SignupDTO signupDTO) throws Exception {
-        String ACCESS_TOKEN = getAdminAccessToken(USERNAME, PASSWORD, GRANT_TYPE, null).getAccessToken();
+        String ACCESS_TOKEN = getAdminAccessToken(username, password, GRANT_TYPE, null).getAccessToken();
+        System.out.println("access token: " + ACCESS_TOKEN);
         //create credentials
         //requestbody
         Credential credential = new Credential();
@@ -42,10 +44,12 @@ public class KeyCloakService {
 
         UserRequest userRequest = new UserRequest();
         userRequest.setUsername(signupDTO.getUsername());
-        userRequest.setLastName(signupDTO.getLastName());
         userRequest.setEmail(signupDTO.getEmail());
         userRequest.setEnabled(true);
-        userRequest.setFirstName(signupDTO.getFirstName());
+        userRequest.setFirstName(signupDTO.getFullName());
+        userRequest.getCredentials().add(credential);
+
+        RestTemplate restTemplate = new RestTemplate();
 
         //invoke api
         HttpHeaders headers = new HttpHeaders();
@@ -53,6 +57,7 @@ public class KeyCloakService {
         headers.setBearerAuth(ACCESS_TOKEN);
 
         HttpEntity<UserRequest> requestHttpEntity = new HttpEntity<>(userRequest, headers);
+
         ResponseEntity<String> response = restTemplate.exchange(
                 KEYCLOAK_ADMIN_API,
                 HttpMethod.POST,
@@ -81,21 +86,21 @@ public class KeyCloakService {
     public TokenResponse getAdminAccessToken(String username, String password, String grantType, String refreshToken) throws Exception {
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         MultiValueMap<String, String> requestBody = new LinkedMultiValueMap<>();
-        requestBody.add("username", username);
-        requestBody.add("password", password);
-        requestBody.add("grant_type", grantType);
         requestBody.add("client_id", CLIENT_ID);
         requestBody.add("client_secret", CLIENT_SECRET);
-        requestBody.add("scope", SCOPE);
-        requestBody.add("refresh_token", refreshToken);
+        requestBody.add("grant_type", grantType);
+        requestBody.add("scope", scope);
+        requestBody.add("username", username);
+        requestBody.add("password", password);
+        requestBody.add("refresh_token",refreshToken);
 
         HttpEntity<MultiValueMap<String, String>> requestHttpEntity = new HttpEntity<>(requestBody, headers);
         ResponseEntity<TokenResponse> response = restTemplate.exchange(
                 TOKEN_URL,
-                HttpMethod.GET,
+                HttpMethod.POST,
                 requestHttpEntity,
                 TokenResponse.class
         );
@@ -183,6 +188,36 @@ public class KeyCloakService {
         } catch (Exception e) {
 
             throw new Exception("Failed to assign roles: " + e.getMessage());
+        }
+    }
+
+    public KeycloakUserinfo fetchUserProfileByJwt(String token) throws Exception {
+        System.out.println("keycloak profile token "+ token);
+        String url = KEYCLOAK_BASE_URL+"/realms/master/protocol/openid-connect/userinfo";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add("Authorization",  token);
+
+
+        // Create an HttpEntity with the headers
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        try {
+            // Send the GET request
+            ResponseEntity<KeycloakUserinfo> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    entity,
+                    KeycloakUserinfo.class
+            );
+
+            // Extract and return the first user object
+            return response.getBody();
+
+        } catch (Exception e) {
+            System.out.println("Failed to fetch user details: " + e.getMessage());
+            throw new Exception("Failed to fetch user details: " + e.getMessage());
         }
     }
 }

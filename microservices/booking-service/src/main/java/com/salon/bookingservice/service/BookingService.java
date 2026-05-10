@@ -1,9 +1,9 @@
 package com.salon.bookingservice.service;
 
-import com.salon.bookingservice.dto.BookingRequest;
-import com.salon.bookingservice.dto.SalonDTO;
-import com.salon.bookingservice.dto.ServiceDTO;
-import com.salon.bookingservice.dto.UserDTO;
+import com.salon.bookingservice.payload.dto.BookingRequest;
+import com.salon.bookingservice.payload.dto.SalonDTO;
+import com.salon.bookingservice.payload.dto.ServiceDTO;
+import com.salon.bookingservice.payload.dto.UserDTO;
 import com.salon.bookingservice.model.Booking;
 import com.salon.bookingservice.model.BookingStatus;
 import com.salon.bookingservice.model.SalonReport;

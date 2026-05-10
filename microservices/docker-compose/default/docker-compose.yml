@@ -50,6 +50,23 @@ services:
     networks:
       - kamana04
 
+  notificationdb:
+    image: mysql
+    container_name: notificationdb
+    ports:
+      - 3308:3306
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      timeout: 10s
+      retries: 10
+      interval: 10s
+      start_period: 10s
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: notificationdb
+    networks:
+      - kamana04
+
   paymentdb:
     image: mysql
     container_name: paymentdb
@@ -198,6 +215,34 @@ services:
       resources:
         limits:
           memory: 700m
+    networks:
+      - kamana04
+
+  notification:
+    image: "kamana04/salon-notification:v1"
+    ports:
+      - "5007:5007"
+    container_name: notification
+    healthcheck:
+      test: "curl --fail --silent notification:5007/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    depends_on:
+      notificationdb:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+    environment:
+      SPRING_APPLICATION_NAME: "notification"
+      SPRING_PROFILES_ACTIVE: default
+      SPRING_DATASOURCE_URL: "jdbc:mysql://notificationdb:3306/notificationdb"
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8070/eureka/
     networks:
       - kamana04
 

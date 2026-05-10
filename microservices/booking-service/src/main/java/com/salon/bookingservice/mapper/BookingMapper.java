@@ -1,6 +1,6 @@
 package com.salon.bookingservice.mapper;
 
-import com.salon.bookingservice.dto.BookingDTO;
+import com.salon.bookingservice.payload.dto.BookingDTO;
 import com.salon.bookingservice.model.Booking;
 
 public class BookingMapper {

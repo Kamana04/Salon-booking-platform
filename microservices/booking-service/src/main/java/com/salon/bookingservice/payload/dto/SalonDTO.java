@@ -1,4 +1,4 @@
-package com.salon.bookingservice.dto;
+package com.salon.bookingservice.payload.dto;
 
 import lombok.Data;
 
